@@ -11,10 +11,12 @@ import {
   ref,
   shallowReactive,
   shallowRef,
+  toRaw,
   triggerRef,
   watch,
   watchEffect
 } from "vue";
+import { track, TrackOpTypes } from "@vue/reactivity";
 
 type instantiateSync = typeof import("@assemblyscript/loader")["instantiateSync"];
 interface Sorter extends ReturnType<instantiateSync> {
@@ -79,8 +81,10 @@ export async function sorted(
     sort
   } = sorter.exports;
 
-  const view = shallowRef<Int32Array>(null);
-  const ptr = ref<number>(null);
+  const infos = new VInt32Array(unsorted.size * 7, {
+    id: Int32Array_ID,
+    util: sorter.exports
+  });
   let objects = new Map<number, PlacedIsoObject>();
   const offsets = new WeakMap<PlacedIsoObject, number>();
 
@@ -108,32 +112,32 @@ export async function sorted(
   //   doSort();
   // }
 
-  function resize() {
-    console.time("resize");
-    const ptrOld = ptr.value;
-    if (ptrOld) __release(ptrOld);
-    const emptryArr = new Array<undefined>(unsorted.size * 7);
-    const ptrNew = __retain(__allocArray(Int32Array_ID, emptryArr));
-    view.value = shallowReactive(__getInt32ArrayView(ptrNew));
-    ptr.value = ptrNew;
-    console.timeEnd("resize");
-  }
+  // function resize() {
+  //   console.time("resize");
+  //   const ptrOld = sortedBuffer.ptr;
+  //   if (ptrOld) __release(ptrOld);
+  //   const emptryArr = new Array<undefined>(unsorted.size * 7);
+  //   const ptrNew = __retain(__allocArray(Int32Array_ID, emptryArr));
+  //   sortedBuffer.value = shallowReactive(__getInt32ArrayView(ptrNew));
+  //   ptr.value = ptrNew;
+  //   console.timeEnd("resize");
+  // }
 
-  function fillAll() {
-    console.time("fill");
-    const v = view.value;
-    let offset = 0;
+  // function fillAll() {
+  //   console.time("fill");
+  //   const v = infos.value;
+  //   let offset = 0;
 
-    objects.clear();
-    for (let obj of unsorted) {
-      const info = sortInfo(obj);
+  //   objects.clear();
+  //   for (let obj of unsorted) {
+  //     const info = sortInfo(obj);
 
-      objects.set(info[6], obj);
-      v.set(info, offset);
-      offset += 7;
-    }
-    console.timeEnd("fill");
-  }
+  //     objects.set(info[6], obj);
+  //     v.set(info, offset);
+  //     offset += 7;
+  //   }
+  //   console.timeEnd("fill");
+  // }
 
   // function update() {
   //   if (unsorted.size * 7 !== view.value?.length) {
@@ -148,11 +152,10 @@ export async function sorted(
     const offset = offsets.get(obj);
     console.log("updateSingle", obj, offset);
     const info = _sortInfo(obj);
-    view.value.set(info, offset);
-    triggerRef(view);
+    infos.value.set(info, offset);
   }
 
-  resize();
+  // resize();
 
   let offset = 0;
   for (let obj of unsorted) {
@@ -166,7 +169,8 @@ export async function sorted(
 
   let shouldSort = false;
 
-  watch(view, () => (shouldSort = true), { immediate: true });
+  console.log(infos.value);
+  watch(infos.ref, () => (shouldSort = true), { immediate: true });
 
   setInterval(() => {
     if (!shouldSort) return;
@@ -199,9 +203,9 @@ export async function sorted(
     console.count("sort");
     console.time("sort");
     console.time("sort:total");
-    sort(ptr.value);
+    sort(infos.ptr);
     console.timeEnd("sort");
-    const sortedView = view.value;
+    const sortedView = toRaw(infos.value);
     //console.log("sort", ptr.value, sortedView[7 + 6]);
     const len = sortedView.length / 7;
 

@@ -61,11 +61,23 @@ import type { ASUtil } from "@assemblyscript/loader";
 export abstract class VPointer<T> {
   protected _value: T;
   protected _ptr: number;
+  protected track: () => void;
+  protected trigger: () => void;
+  public readonly ref: Ref<void>;
 
   constructor();
   constructor(value: T);
   constructor(value?: T) {
     if (typeof value !== "undefined") this.value = value;
+
+    this.ref = customRef((track, trigger) => {
+      this.track = track;
+      this.trigger = trigger;
+      return {
+        get: () => track(),
+        set: () => trigger()
+      };
+    });
   }
 
   //   protected abstract retain(ptr: number): void;
@@ -76,18 +88,21 @@ export abstract class VPointer<T> {
   protected abstract set(v: T): void;
 
   get value(): T {
-    track(this, TrackOpTypes.GET, "value");
+    this.track();
+    //track(this.ref, TrackOpTypes.GET, "value");
     return this._value;
   }
 
   set value(v: T) {
     this.set(v);
-    trigger(this, TriggerOpTypes.SET, "value");
-    trigger(this, TriggerOpTypes.SET, "ptr");
+    this.trigger();
+    //trigger(this, TriggerOpTypes.SET, "value");
+    //trigger(this, TriggerOpTypes.SET, "ptr");
   }
 
   get ptr(): number {
-    track(this, TrackOpTypes.GET, "ptr");
+    this.track();
+    //track(this, TrackOpTypes.GET, "ptr");
     return this._ptr;
   }
 }
@@ -119,6 +134,11 @@ export class VInt32Array extends VPointer<Int32Array> {
   }
 
   set(v: ArrayLike<number>) {
+    if (this._value && v.length === this._value.length) {
+      this._value.set(v);
+      return;
+    }
+
     if (this._ptr) this.util.__release(this._ptr);
 
     this._ptr = this.util.__allocArray(this.id, v);
