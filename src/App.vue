@@ -1,9 +1,7 @@
 <template>
   <main>
     <h1>Hi</h1>
-    <suspense>
-      <iso-map width="1000" height="700" />
-    </suspense>
+    <iso-map width="1000" height="700" />
   </main>
 </template>
 

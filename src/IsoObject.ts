@@ -18,7 +18,7 @@ interface Pos {
   z: number;
 }
 
-export type PlacedIsoObject = Readonly<IsoObject> & Pos;
+export type PlacedIsoObject = Positioned;
 
 export type Positioned<T extends IsoObject = IsoObject> = Readonly<T> & Pos;
 
@@ -162,31 +162,31 @@ export default class IsoObject {
   }
 }
 
-export type RenderInfo = Sortable<PlacedIsoObject>;
+// export type RenderInfo = Sortable<PlacedIsoObject>;
 
-const renderInfoCache = shallowReactive(
-  new WeakMap<PlacedIsoObject, RenderInfo>()
-);
-function renderInfo(o: PlacedIsoObject): RenderInfo {
-  let info = renderInfoCache.get(o);
+// const renderInfoCache = shallowReactive(
+//   new WeakMap<PlacedIsoObject, RenderInfo>()
+// );
+// function renderInfo(o: PlacedIsoObject): RenderInfo {
+//   let info = renderInfoCache.get(o);
 
-  if (!info) {
-    watchEffect(() => {
-      const { x: X, y: Y, z } = o;
-      info = {
-        x: X - o.dx,
-        y: Y - o.dy,
-        z,
-        X,
-        Y,
-        Z: z + o.dz,
-        ref: o
-      };
-      renderInfoCache.set(o, info);
-    });
-  }
-  return info;
-}
+//   if (!info) {
+//     watchEffect(() => {
+//       const { x: X, y: Y, z } = o;
+//       info = {
+//         x: X - o.dx,
+//         y: Y - o.dy,
+//         z,
+//         X,
+//         Y,
+//         Z: z + o.dz,
+//         ref: o
+//       };
+//       renderInfoCache.set(o, info);
+//     });
+//   }
+//   return info;
+// }
 
 // function isoSort(unsorted: Set<RenderInfo>) {
 //   const result: PlacedIsoObject[] = [];
@@ -210,28 +210,28 @@ function renderInfo(o: PlacedIsoObject): RenderInfo {
 //   return result;
 // }
 
-import { isoSort, Sortable } from "./sorter";
+// import { isoSort, Sortable } from "./sorter";
 
-export function ordered(
-  objects: ArrayLike<PlacedIsoObject> | Ref<ArrayLike<PlacedIsoObject>>
-) {
-  const sorted = ref<PlacedIsoObject[]>([]);
-  //console.log(isoSort.toString());
-  watchEffect(onInvalidate => {
-    objects = unref(objects);
+// export function ordered(
+//   objects: ArrayLike<PlacedIsoObject> | Ref<ArrayLike<PlacedIsoObject>>
+// ) {
+//   const sorted = ref<PlacedIsoObject[]>([]);
+//   //console.log(isoSort.toString());
+//   watchEffect(onInvalidate => {
+//     objects = unref(objects);
 
-    console.time("ordering:map");
-    const unsorted = new Set(Array.from(objects, renderInfo));
-    console.timeEnd("ordering:map");
-    const id = (Math.random() * 10000) | 0;
-    console.time("ordering:sort" + id);
-    const _sorted = isoSort(unsorted);
-    console.timeEnd("ordering:sort" + id);
+//     console.time("ordering:map");
+//     const unsorted = new Set(Array.from(objects, renderInfo));
+//     console.timeEnd("ordering:map");
+//     const id = (Math.random() * 10000) | 0;
+//     console.time("ordering:sort" + id);
+//     const _sorted = isoSort(unsorted);
+//     console.timeEnd("ordering:sort" + id);
 
-    sorted.value = _sorted;
-  });
-  return sorted;
-}
+//     sorted.value = _sorted;
+//   });
+//   return sorted;
+// }
 
 enum RenderOrder {
   /*@__INLINE__*/

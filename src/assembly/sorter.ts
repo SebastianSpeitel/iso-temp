@@ -16,6 +16,8 @@ export function sort(arr: Int32Array): void {
   for (let i: i32 = 0; i < arr.length; i += 7) {
     //log(-1);
     let first: i32 = i;
+
+    // Find the next object, which should be behind all other objects
     for (let next: i32 = i + 7; next < arr.length; next += 7) {
       // next.x >= first.X
       if (arr[next] >= arr[first + 1]) continue;
@@ -28,6 +30,12 @@ export function sort(arr: Int32Array): void {
 
       first = next;
     }
+
+    // Skip if first is already in the correct spot
+    // This optimization seems to be already be done by the compiler
+    if (i == first) continue;
+
+    // Swap i and first
     for (let prop: u8 = 0; prop < 7; prop++) {
       swap(arr, i + prop, first + prop);
     }

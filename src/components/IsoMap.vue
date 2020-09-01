@@ -14,12 +14,7 @@
 <script lang="ts">
 import VIsoObject from "./IsoObject.vue";
 import { computed, h, reactive, toRefs, ref, onMounted, Ref, watch } from "vue";
-import IsoObject, {
-  Positioned,
-  renderOrder,
-  PlacedIsoObject,
-  ordered
-} from "../IsoObject";
+import IsoObject, { PlacedIsoObject } from "../IsoObject";
 import { sorted } from "../sorter";
 import { Tile1x1, Tile4x4, Tile1x2, SlopeRight, Player } from "./objects";
 //@ts-ignore
@@ -52,7 +47,7 @@ function shuffle(a: any[]) {
 
 export default {
   components: { VIsoObject },
-  async setup(props, { attrs }) {
+  setup(props, { attrs }) {
     const container: Ref<HTMLDivElement> = ref(null);
     let objects: PlacedIsoObject[] = [];
 
@@ -95,7 +90,8 @@ export default {
     objects.push(Tile4x4.at({ x: 4, y: 4, z: 0 }));
 
     objects.push(Tile1x2.at({ x: -2, y: 3, z: 1 }));
-    objects.push(SlopeRight.at({ x: -1, y: 3, z: 1 }));
+    const slope = SlopeRight.at({ x: -1, y: 3, z: 1 });
+    objects.push(slope);
 
     //setInterval(() => (player.z += 0.1), 500);
 
@@ -128,7 +124,21 @@ export default {
       }
     });
 
-    const sortedObjects = await sorted(new Set(objects));
+    const reactiveSet = new Set(objects);
+    const sortedObjects = ref(objects);
+    //@ts-ignore
+    sorted(reactiveSet).then(objs => (sortedObjects.value = objs));
+    //const sortedObjects = await sorted(reactive(reativeSet));
+
+    // setInterval(() => {
+    //   reativeSet.add(
+    //     Tile1x1.at({
+    //       x: Math.random() * 10,
+    //       y: Math.random() * 10,
+    //       z: Math.random() * 10
+    //     })
+    //   );
+    // }, 1000);
     //const sortedObjects = await ordered(objects);
 
     // computed(() => ordered(objects));
