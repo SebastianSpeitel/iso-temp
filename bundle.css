@@ -1,0 +1,9 @@
+
+.tile {
+  fill: aliceblue;
+  stroke: rebeccapurple;
+  stroke-width: calc(0.2mm / 20);
+}
+.tile:hover {
+  stroke-width: calc(0.5mm / 20);
+}
