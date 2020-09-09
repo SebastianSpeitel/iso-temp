@@ -58,11 +58,12 @@ type Ptr<T extends Object> = T & {
 // }
 
 import type { ASUtil } from "@assemblyscript/loader";
+
 export abstract class VPointer<T> {
   protected _value: T;
   protected _ptr: number;
-  protected track: () => void;
-  protected trigger: () => void;
+  private track: () => void;
+  private trigger: () => void;
   public readonly ref: Ref<void>;
 
   constructor();
@@ -85,7 +86,9 @@ export abstract class VPointer<T> {
   //   protected abstract alloc(val: T): number;
   //   protected abstract get(ptr: number): T;
 
-  protected abstract set(v: T): void;
+  protected abstract alloc(v: T): void;
+  protected abstract free(): void;
+  // protected abstract set(v: T): void;
 
   get value(): T {
     this.track();
@@ -94,7 +97,8 @@ export abstract class VPointer<T> {
   }
 
   set value(v: T) {
-    this.set(v);
+    this.free();
+    this.alloc(v);
     this.trigger();
     //trigger(this, TriggerOpTypes.SET, "value");
     //trigger(this, TriggerOpTypes.SET, "ptr");
@@ -130,21 +134,42 @@ export class VInt32Array extends VPointer<Int32Array> {
       lengthOrValues = { length: lengthOrValues };
     }
 
-    this.set(lengthOrValues);
+    this.alloc(lengthOrValues);
   }
 
-  set(v: ArrayLike<number>) {
+  alloc(value: ArrayLike<number>) {
+    this._ptr = this.util.__allocArray(this.id, value);
+    this._value = this.util.__getInt32ArrayView(this._ptr);
+    this.util.__retain(this._ptr);
+  }
+
+  free() {
+    if (!this._ptr) return;
+    this.util.__release(this._ptr);
+  }
+
+  set value(v: Int32Array) {
     if (this._value && v.length === this._value.length) {
       this._value.set(v);
       return;
     }
 
-    if (this._ptr) this.util.__release(this._ptr);
-
-    this._ptr = this.util.__allocArray(this.id, v);
-    this.util.__retain(this._ptr);
-    this._value = shallowReactive(this.util.__getInt32ArrayView(this._ptr));
+    super.value = v;
   }
+
+  get value() {
+    return super.value;
+  }
+
+  // set(v: ArrayLike<number>) {
+  //   if (this._value && v.length === this._value.length) {
+  //     this._value.set(v);
+  //     return;
+  //   }
+
+  //   this.free();
+  //   this.alloc(v);
+  // }
 
   //   release(ptr: number) {
   //     this.util.__release(ptr);

@@ -4,7 +4,7 @@
 
 declare function log(n: i32): void;
 
-export const Int32Array_ID = idof<Int32Array>();
+export const Int32Array_ID: number = idof<Int32Array>();
 
 function swap(arr: Int32Array, a: i32, b: i32): void {
   const tmp: i32 = arr[b];

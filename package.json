@@ -13,6 +13,7 @@
     "@rollup/plugin-node-resolve": "^9.0.0",
     "@rollup/plugin-replace": "^2.3.3",
     "@sebastianspeitel/rollup-plugin-assemblyscript-loader": "0.0.2",
+    "@types/requestidlecallback": "^0.3.1",
     "@vue/compiler-sfc": "^3.0.0-rc.8",
     "assemblyscript": "^0.14.9",
     "rollup": "^2.26.5",

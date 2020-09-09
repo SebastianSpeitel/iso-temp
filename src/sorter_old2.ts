@@ -108,6 +108,65 @@ export async function sorted(
   let objects = new Map<number, PlacedIsoObject>();
   const offsets = new WeakMap<PlacedIsoObject, number>();
 
+  // function realloc() {
+  //   if (view.value && view.value.length === unsorted.size * 7) return;
+
+  //   if (ptr.value) __release(ptr.value);
+  //   objects = new Map();
+  //   let _arr = new Int32Array(unsorted.size * 7);
+  //   let offset = 0;
+  //   for (let obj of unsorted) {
+  //     const info = sortInfo(obj);
+
+  //     objects.set(info[6], obj);
+  //     _arr.set(info, offset);
+  //     offset += 7;
+  //   }
+
+  //   ptr.value = __retain(__allocArray(Int32Array_ID, _arr));
+  //   console.log(ptr.value);
+
+  //   view.value = shallowReactive(__getInt32ArrayView(ptr.value));
+  //   console.log("alloc", view.value[7 + 6]);
+
+  //   doSort();
+  // }
+
+  // function resize() {
+  //   console.time("resize");
+  //   const ptrOld = sortedBuffer.ptr;
+  //   if (ptrOld) __release(ptrOld);
+  //   const emptryArr = new Array<undefined>(unsorted.size * 7);
+  //   const ptrNew = __retain(__allocArray(Int32Array_ID, emptryArr));
+  //   sortedBuffer.value = shallowReactive(__getInt32ArrayView(ptrNew));
+  //   ptr.value = ptrNew;
+  //   console.timeEnd("resize");
+  // }
+
+  // function fillAll() {
+  //   console.time("fill");
+  //   const v = infos.value;
+  //   let offset = 0;
+
+  //   objects.clear();
+  //   for (let obj of unsorted) {
+  //     const info = sortInfo(obj);
+
+  //     objects.set(info[6], obj);
+  //     v.set(info, offset);
+  //     offset += 7;
+  //   }
+  //   console.timeEnd("fill");
+  // }
+
+  // function update() {
+  //   if (unsorted.size * 7 !== view.value?.length) {
+  //     resize();
+  //   }
+  //   fillAll();
+  //   doSort();
+  // }
+
   let callbackHandle: number;
 
   function updateSingle(obj: PlacedIsoObject) {
@@ -119,7 +178,10 @@ export async function sorted(
     if (!callbackHandle) {
       callbackHandle = window.requestIdleCallback(doSort, { timeout: 1000 });
     }
+    //triggerRef(infos.ref);
   }
+
+  // resize();
 
   let offset = 0;
   for (let obj of unsorted) {
@@ -131,10 +193,39 @@ export async function sorted(
     offset += 7;
   }
 
+  //let shouldSort = false;
+
+  //watch(infos.ref, () => (shouldSort = true), { immediate: true });
+
+  // setInterval(() => {
+  //   if (!shouldSort) return;
+  //   doSort();
+  //   shouldSort = false;
+  // }, 1000);
+
+  //watchEffect(realloc);
+  //watchEffect(update);
+
+  // let i = 0;
+  // for (let o of unsorted) {
+  //   watchEffect(() => {
+  //     const offset = offsets.get(o);
+  //     map.set(o.id, o);
+
+  //     const { x: X, y: Y, z } = o;
+  //     view.set([X - o.dx, X, Y - o.dy, Y, z, z + o.dz, o.id], i);
+  //   });
+
+  //   i += 7;
+  // }
+  // return function* () {
+  //   for (let offset = 0; offset < view.length; offset += 7) {
+  //     yield objects.get(view[offset + 6]);
+  //   }
+  // };
+
   function doSort(deadline: IdleDeadline) {
     callbackHandle = 0;
-    const startedAt = performance.now();
-    const maxTime = deadline.timeRemaining();
     console.count("sort");
     console.time("sort");
     console.time("sort:total");
@@ -153,12 +244,24 @@ export async function sorted(
       sorted[index] = obj;
     }
 
-    const timeTaken = performance.now() - startedAt;
-    if (timeTaken > maxTime) {
-      console.warn("Sorting took to long:", timeTaken, ">", maxTime);
+    if (deadline.timeRemaining() <= 0) {
+      console.warn("Sorting took to long:", deadline.timeRemaining());
     }
     console.timeEnd("sort:total");
   }
+
+  //watchEffect(doSort);
+  // watch(
+  //   () => {
+  //     unsorted.forEach(({ x, y, z }) => {
+  //       x;
+  //       y;
+  //       z;
+  //     });
+  //   },
+  //   doSort,
+  //   { deep: true }
+  // );
 
   return sorted;
 }
